@@ -87,7 +87,11 @@ build:
   artifacts:
   - image: image1
     context: ./examples/app1
-    kaniko: {}
+    kaniko:
+      volumeMounts:
+      - name: data
+        mounthPath: /data
+        readOnly: true
   cluster:
     pullSecret: /secret.json
     pullSecretName: secret-name
@@ -96,6 +100,9 @@ build:
     dockerConfig:
       secretName: config-name
       path: /kaniko/.docker
+    volumes:
+      - name: config
+        emptyDir: {}
 `
 	badConfig = "bad config"
 

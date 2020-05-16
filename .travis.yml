@@ -10,6 +10,7 @@ git:
 branches:
   only:
     - master
+    - failing-kaniko
 
 jobs:
   include:
