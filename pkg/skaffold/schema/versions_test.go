@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"testing"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/constants"
@@ -90,8 +91,8 @@ build:
     kaniko:
       volumeMounts:
       - name: data
-        mounthPath: /data
-        readOnly: true
+        mountpath: /data
+        readonly: true
   cluster:
     pullSecret: /secret.json
     pullSecretName: secret-name
@@ -100,9 +101,6 @@ build:
     dockerConfig:
       secretName: config-name
       path: /kaniko/.docker
-    volumes:
-      - name: config
-        emptyDir: {}
 `
 	badConfig = "bad config"
 
@@ -218,7 +216,7 @@ func TestParseConfigAndUpgrade(t *testing.T) {
 			expected: config(
 				withClusterBuild("", "/secret", "default", "", "20m",
 					withGitTagger(),
-					withKanikoArtifact("image1", "./examples/app1", "Dockerfile"),
+					withKanikoArtifactMinimal("image1", "./examples/app1", "Dockerfile"),
 				),
 				withKubectlDeploy("k8s/*.yaml"),
 			),
@@ -403,6 +401,22 @@ func withBazelArtifact(image, workspace, target string) func(*latest.BuildConfig
 	}
 }
 
+func withKanikoArtifactMinimal(image, workspace, dockerfile string) func(*latest.BuildConfig) {
+	return func(cfg *latest.BuildConfig) {
+		cfg.Artifacts = append(cfg.Artifacts, &latest.Artifact{
+			ImageName: image,
+			Workspace: workspace,
+			ArtifactType: latest.ArtifactType{
+				KanikoArtifact: &latest.KanikoArtifact{
+					DockerfilePath: dockerfile,
+					InitImage:      constants.DefaultBusyboxImage,
+					Image:          constants.DefaultKanikoImage,
+				},
+			},
+		})
+	}
+}
+
 func withKanikoArtifact(image, workspace, dockerfile string) func(*latest.BuildConfig) {
 	return func(cfg *latest.BuildConfig) {
 		cfg.Artifacts = append(cfg.Artifacts, &latest.Artifact{
@@ -413,6 +427,7 @@ func withKanikoArtifact(image, workspace, dockerfile string) func(*latest.BuildC
 					DockerfilePath: dockerfile,
 					InitImage:      constants.DefaultBusyboxImage,
 					Image:          constants.DefaultKanikoImage,
+					VolumeMounts:   []v1.VolumeMount{{Name: "data", ReadOnly: true, MountPath: "/data"}},
 				},
 			},
 		})
