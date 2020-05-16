@@ -87,7 +87,10 @@ build:
   artifacts:
   - image: image1
     context: ./examples/app1
-    kaniko: {}
+    kaniko:
+      volumeMounts:
+      - name: dnaas
+        mounthPath: /dnaas
   cluster:
     pullSecret: /secret.json
     pullSecretName: secret-name
